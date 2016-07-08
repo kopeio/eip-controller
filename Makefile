@@ -1,8 +1,10 @@
 all: image
 
 code:
-	glide install --strip-vendor --strip-vcs
 	go install github.com/kopeio/eip-controller/cmd/eip-controller
+
+godep:
+	glide install --strip-vendor --strip-vcs
 
 test:
 	go test -v github.com/kopeio/eip-controller/pkg/...

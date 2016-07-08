@@ -8,16 +8,16 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/golang/glog"
-	"net"
 	"github.com/kopeio/eip-controller/pkg/kope"
+	"net"
 )
 
 // The tag name we use to differentiate multiple logically independent clusters running in the same region
 const TagNameKubernetesCluster = "KubernetesCluster"
 
 type AWSCloud struct {
-	ec2        *ec2.EC2
-	metadata   *ec2metadata.EC2Metadata
+	ec2      *ec2.EC2
+	metadata *ec2metadata.EC2Metadata
 
 	zone       string
 	instanceID string
@@ -50,11 +50,13 @@ func NewAWSCloud() (*AWSCloud, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error querying ec2 metadata service (for az): %v", err)
 	}
+	glog.Infof("Running in AZ %q", a.zone)
 
 	a.instanceID, err = a.metadata.GetMetadata("instance-id")
 	if err != nil {
 		return nil, fmt.Errorf("error querying ec2 metadata service (for instance-id): %v", err)
 	}
+	glog.Infof("Running on instance %q", a.instanceID)
 
 	a.ec2 = ec2.New(s, config.WithRegion(region))
 
@@ -62,12 +64,6 @@ func NewAWSCloud() (*AWSCloud, error) {
 	if err != nil {
 		return nil, err
 	}
-func (a *AWSCloud) DiscoverClusterID() (error) {
-	err = a.getSelfInstance()
-	if err != nil {
-		return nil, err
-	}
-}
 
 	return a, nil
 }
@@ -90,6 +86,7 @@ func (a *AWSCloud) getSelfInstance() error {
 	}
 
 	a.clusterID = clusterID
+	glog.Infof("ClusterID is %q", clusterID)
 
 	a.internalIP = net.ParseIP(aws.StringValue(instance.PrivateIpAddress))
 	if a.internalIP == nil {
@@ -126,7 +123,7 @@ func (a *AWSCloud) describeInstance(instanceID string) (*ec2.Instance, error) {
 // This lets us run multiple k8s clusters in a single EC2 AZ
 func (a *AWSCloud) addFilterTags(filters []*ec2.Filter) []*ec2.Filter {
 	//for k, v := range c.filterTags {
-	filters = append(filters, newEc2Filter("tag:" + TagNameKubernetesCluster, a.clusterID))
+	filters = append(filters, newEc2Filter("tag:"+TagNameKubernetesCluster, a.clusterID))
 	//}
 	if len(filters) == 0 {
 		// We can't pass a zero-length Filters to AWS (it's an error)
@@ -164,7 +161,7 @@ func (a *AWSCloud) DescribeInstances() ([]*ec2.Instance, error) {
 
 func (a *AWSCloud) DescribeAddresses() ([]*ec2.Address, error) {
 	request := &ec2.DescribeAddressesInput{
-		// No tags on EIPs
+	// No tags on EIPs
 	}
 
 	glog.Infof("Querying EC2 elastic IPs with DescribeAddresses")
@@ -176,6 +173,28 @@ func (a *AWSCloud) DescribeAddresses() ([]*ec2.Address, error) {
 	return response.Addresses, nil
 }
 
+// DescribeAddress retrieves the ElasticIP with the specified public IP
+func (a *AWSCloud) DescribeAddress(publicIP string) (*ec2.Address, error) {
+	request := &ec2.DescribeAddressesInput{
+		Filters: []*ec2.Filter{newEc2Filter("public-ip", publicIP)},
+	}
+
+	glog.Infof("Querying EC2 elastic IPs with DescribeAddresses for IP %q", publicIP)
+
+	response, err := a.ec2.DescribeAddresses(request)
+	if err != nil {
+		return nil, fmt.Errorf("error during EC2 DescribeAddresses: %v", err)
+	}
+	if len(response.Addresses) == 0 {
+		return nil, nil
+	}
+
+	if len(response.Addresses) != 1 {
+		return nil, fmt.Errorf("found multiple elastic IPs with PublicIP: %v", publicIP)
+	}
+
+	return response.Addresses[0], nil
+}
 
 // Sets the instance attribute "source-dest-check" to the specified value
 func (a *AWSCloud) ConfigureInstanceSourceDestCheck(instanceID string, sourceDestCheck bool) error {
@@ -211,7 +230,6 @@ func (a *AWSCloud) AssociateAddress(instanceID string, elasticIP string, allocat
 	glog.Infof("Attaching Elastic IP %q to %q (allocation %q)", elasticIP, instanceID, allocationID)
 
 	request := &ec2.AssociateAddressInput{}
-	request.PublicIp = aws.String(elasticIP)
 	request.InstanceId = aws.String(instanceID)
 	request.AllocationId = aws.String(allocationID)
 

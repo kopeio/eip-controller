@@ -8,17 +8,17 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
-	"github.com/kopeio/eip-controller/pkg/awscontroller/eip"
+	"github.com/kopeio/eip-controller/pkg/eipcontroller/eip"
 	"github.com/kopeio/eip-controller/pkg/kope/kopeaws"
 )
 
 var (
 	flags = pflag.NewFlagSet("", pflag.ExitOnError)
 
-	resyncPeriod = flags.Duration("sync-period", 30 * time.Second,
+	resyncPeriod = flags.Duration("sync-period", 30*time.Second,
 		`Relist and confirm cloud resources this often.`)
 
-	flagClusterID = flags.String("cluster-id", "", "cluster-id")
+	flagClusterID  = flags.String("cluster-id", "", "cluster-id")
 	flagElasticIPs = flags.StringSlice("eip", []string{}, "specify elastic ips to assign")
 )
 

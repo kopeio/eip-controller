@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: eip-controller
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: eip-controller
+    spec:
+      containers:
+      - name: eip-controller
+        image: kope/eip-controller
+        command:
+        - /usr/bin/eip-controller
+        - --eip=52.20.89.150
+        - --eip=52.205.217.35
+        - --v=4
