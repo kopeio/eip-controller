@@ -1,0 +1,36 @@
+hash: 67320ffc14bb8ab25a551065968349cad838912f0d7a472924b9370ce25a576e
+updated: 2016-07-08T09:48:19.717838122-04:00
+imports:
+- name: github.com/aws/aws-sdk-go
+  version: 90dec2183a5f5458ee79cbaf4b8e9ab910bc81a6
+  subpackages:
+  - aws
+  - aws/ec2metadata
+  - aws/request
+  - aws/session
+  - service/ec2
+  - aws/awserr
+  - aws/credentials
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/signer/v4
+  - private/endpoints
+  - private/protocol
+  - private/protocol/ec2query
+  - private/waiter
+  - aws/corehandlers
+  - aws/defaults
+  - private/protocol/rest
+  - private/protocol/query/queryutil
+  - private/protocol/xml/xmlutil
+  - aws/credentials/ec2rolecreds
+- name: github.com/go-ini/ini
+  version: 927d8d7ced542ab92df77ac1637b6e56336ee0dd
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+- name: github.com/jmespath/go-jmespath
+  version: 0b12d6b521d83fc7f755e7cfc1b1fbdd35a01a74
+- name: github.com/spf13/pflag
+  version: 367864438f1b1a3c7db4da06a2f55b144e6784e0
+devImports: []
